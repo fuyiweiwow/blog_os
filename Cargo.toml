@@ -7,20 +7,29 @@ edition = "2024"
 bootloader = "0.9" # A basic BIOS bootloader without any C dependencies, just Rust and inline assembly, just use ver 0.9
 volatile = "0.2.6"
 spin = "0.5.2"
+x86_64 = "0.14.2" # About exit our test 
+uart_16550 = "0.2.0" # To support print test info redirect to our console
 
 [dependencies.lazy_static]
 version = "1.0"
 features = ["spin_no_std"]
 
 [profile.dev]
-panic = "abort"
+#panic = "abort"
 
 [profile.release]
-panic = "abort"
+#panic = "abort"
 
 [[bin]]
 name = "blog_os"
-test = false
+test = true
 bench = false
 
-
+[package.metadata.bootimage]
+test-args = [
+    "-device",  "isa-debug-exit,iobase=0xf4,iosize=0x04",    # Provide a easy way allow us to exit after test 
+    "-serial",  "stdio",    # use serial redirect test info
+    "-display", "none"    # Hide qemu  
+] 
+test-success-exit-code = 33         # cargo test considers all error codes other than 0 as failure, we need some map -> (0x10 << 1) | 1
+test-timeout = 10         # (in seconds)
