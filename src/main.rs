@@ -1,29 +1,11 @@
 #![no_std]  // Disable Rust standard library
 #![no_main] // Disable all Rust-level entry points
 #![feature(custom_test_frameworks)]
-#![test_runner(crate::test_runner)]
-#![reexport_test_harness_main = "test_main"] // Act like redirect the "test_main" to test_runner
+#![test_runner(blog_os::test_runner)]
+#![reexport_test_harness_main = "test_main"] 
 
 use core::panic::PanicInfo;
-mod vga_buffer;
-mod serial;
-
-#[derive(Debug, Clone, Copy, PartialEq, Eq)]
-#[repr(u32)]
-pub enum QemuExitCode {
-    Success     = 0x10,
-    Failed      = 0x11
-}
-
-pub fn exit_qemu(exit_code: QemuExitCode) {
-    use x86_64::instructions::port::Port;
-
-    unsafe {
-        let mut port = Port::new(0xf4); // 0xf4 is iobase of isa-debug-exit device
-        port.write(exit_code as u32); // Write to port to tell that we need exit
-    }
-
-}
+use blog_os::println;
 
 // Used as the entry point of the OS
 #[unsafe(no_mangle)]
@@ -48,41 +30,7 @@ fn panic(info: &PanicInfo) -> ! {
 #[cfg(test)]
 #[panic_handler]
 fn panic(info: &PanicInfo) -> ! {
-    serial_print!("[failed]\n");
-    serial_println!("Error: {}\n", info);
-    exit_qemu(QemuExitCode::Failed);
-    loop {}
-}
-
-pub trait Testable {
-    fn run(&self) -> ();
-}
-
-impl<T> Testable for T 
-where 
-    T : Fn(), 
-{
-    fn run(&self) -> () {
-        serial_print!("{}...\t", core::any::type_name::<T>());
-        self();
-        serial_println!("[ok]");
-    }
-}
-
-
-/*
-    SyntaxTip: 
-        &[&dyn Fn()] is a slice of trait object references of the Fn() trait
-        It is basically a list of references to types that can be called like a function
-*/
-#[cfg(test)]
-pub fn test_runner(tests: &[&dyn Testable]) {
-    serial_println!("Running {} tests", tests.len());
-    for test in tests {
-        test.run();
-    }
-
-    exit_qemu(QemuExitCode::Success);
+    blog_os::test_panic_handler(info)
 }
 
 #[test_case]
