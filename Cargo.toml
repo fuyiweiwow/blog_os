@@ -37,3 +37,7 @@ test-timeout = 10         # (in seconds)
 [[test]]
 name = "should_panic" # Test runner of this can be disabled， just run test in entry point
 harness = false
+
+[[test]]
+name = "stack_overflow" 
+harness = false
