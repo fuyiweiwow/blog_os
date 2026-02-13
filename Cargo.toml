@@ -9,6 +9,7 @@ volatile = "0.2.6"
 spin = "0.5.2"
 x86_64 = "0.14.2" # About exit our test 
 uart_16550 = "0.2.0" # To support print test info redirect to our console
+pic8259 = "0.10.1" # Programmable interrupt controller
 
 [dependencies.lazy_static]
 version = "1.0"
