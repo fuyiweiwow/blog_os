@@ -4,7 +4,7 @@ version = "0.1.0"
 edition = "2024"
 
 [dependencies]
-bootloader = "0.9" # A basic BIOS bootloader without any C dependencies, just Rust and inline assembly, just use ver 0.9
+bootloader = {version = "0.9", features = ["map_physical_memory"]} # A basic BIOS bootloader without any C dependencies, just Rust and inline assembly, just use ver 0.9
 volatile = "0.2.6"
 spin = "0.5.2"
 x86_64 = "0.14.2" # About exit our test 

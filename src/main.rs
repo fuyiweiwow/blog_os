@@ -6,10 +6,12 @@
 
 use core::panic::PanicInfo;
 use blog_os::println;
+use bootloader::{BootInfo, entry_point};
+
+entry_point!(kernel_main);
 
 // Used as the entry point of the OS
-#[unsafe(no_mangle)]
-pub extern "C" fn _start() -> ! {
+fn kernel_main(boot_info: &'static BootInfo) -> ! {
     println!("Hello World{}", "!");
     
     blog_os::init();
