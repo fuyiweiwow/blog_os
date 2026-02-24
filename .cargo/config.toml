@@ -1,0 +1,10 @@
+[unstable]
+json-target-spec = true
+build-std-features = ["compiler-builtins-mem"]  # Use memory-related libs isolated with OS provided by compiler
+build-std = ["core", "compiler_builtins", "alloc"] # To recompile core  nad compiler_builtins libs
+
+[build]
+target = "x86_64-blog_os.json" # Set default build target when no explicit --target
+
+[target.'cfg(target_os = "none")'] # To make it easier to run kernel in QEMU
+runner = "bootimage runner"
