@@ -5,9 +5,12 @@
 #![reexport_test_harness_main = "test_main"] 
 
 use core::panic::PanicInfo;
-use blog_os::{memory, println};
+use blog_os::{allocator, memory, println};
 use bootloader::{BootInfo, entry_point};
-use x86_64::{VirtAddr, structures::paging::Page};
+use x86_64::{VirtAddr};
+
+extern crate alloc;
+use alloc::{boxed::Box, rc::Rc, vec::Vec, vec};
 
 entry_point!(kernel_main);
 
@@ -17,7 +20,6 @@ fn kernel_main(boot_info: &'static BootInfo) -> ! {
     println!("Hello World{}", "!");
     blog_os::init();
 
-    use x86_64::{structures::paging::Translate};
     use blog_os::memory::BootInfoFrameAllocator;
 
     let phys_mem_offset = VirtAddr::new(boot_info.physical_memory_offset);
@@ -26,29 +28,23 @@ fn kernel_main(boot_info: &'static BootInfo) -> ! {
         BootInfoFrameAllocator::init(&boot_info.memory_map)
     };
 
-    let page = Page::containing_address(VirtAddr::new(0xdeadbeaf000));
-    memory::create_example_mapping(page, &mut mapper, &mut frame_allocator);
+    allocator::init_heap(& mut mapper, & mut frame_allocator)
+        .expect("heap initialization failed");
 
-    // write the string `New!` to the screen through the new mapping
-    let page_ptr: *mut u64 = page.start_address().as_mut_ptr();
-    unsafe { page_ptr.offset(400).write_volatile(0x_f021_f077_f065_f04e) };
-
-    let addresses = [
-        // the identity-mapped vga buffer page
-        0xb8000,
-        // some code page,
-        0x201008,
-        // some stack page
-        0x100_0020_1a10,
-        // virtual address mapped to physical address 0
-        boot_info.physical_memory_offset,
-    ];
-
-    for &address in &addresses {
-        let virt = VirtAddr::new(address);
-        let phys = mapper.translate_addr(virt);
-        println!("{:?} -> {:?}", virt, phys);
+    let heap_value = Box::new(41);
+    println!("heap_value at {:p}", heap_value); // Syntax tip: print as pointer
+    
+    let mut vec = Vec::new();
+    for i in 0..500 {
+        vec.push(i);
     }
+    println!("vec at {:p}", vec.as_slice());
+
+    let reference_counted = Rc::new(vec![1, 2, 3]);
+    let cloned_reference = reference_counted.clone();
+    println!("current reference count is {}", Rc::strong_count(&cloned_reference));
+    core::mem::drop(reference_counted);
+    println!("reference count is {} now", Rc::strong_count(&cloned_reference));
 
     // Test entry point
     #[cfg(test)]
