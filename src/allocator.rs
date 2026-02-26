@@ -13,14 +13,14 @@ use x86_64:: {
     VirtAddr
 };
 
-use bump::BumpAllocator;
+pub mod bump;
+pub mod linked_list;
 
+use linked_list::LinkedListAllocator;
 use crate::allocator::bump::Locked;
 
-pub mod bump;
-
 #[global_allocator]
-static ALLOCATOR: Locked<BumpAllocator> = Locked::new(BumpAllocator::new());
+static ALLOCATOR: Locked<LinkedListAllocator> = Locked::new(LinkedListAllocator::new());
 
 pub const HEAP_START: usize = 0x_4444_4444_0000;
 pub const HEAP_SIZE: usize = 100 * 1024; // 100 KiB
@@ -65,5 +65,14 @@ unsafe impl GlobalAlloc for Dummy {
 
     unsafe fn dealloc(&self, _ptr: *mut u8, _layout: Layout) {
         panic!("dealloc should be never called")
+    }
+}
+
+fn align_up(addr: usize, align: usize) -> usize {
+    let remainder = addr % align;
+    if remainder == 0 {
+        addr
+    } else {
+        addr - remainder + align
     }
 }

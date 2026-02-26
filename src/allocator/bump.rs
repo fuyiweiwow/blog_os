@@ -1,4 +1,5 @@
 use core::{alloc::{GlobalAlloc, Layout}, ptr};
+use super::align_up;
 
 pub struct Locked<A> {
     inner: spin::Mutex<A>,
@@ -74,11 +75,3 @@ unsafe impl GlobalAlloc for Locked<BumpAllocator> {
     }
 }
 
-fn align_up(addr: usize, align: usize) -> usize {
-    let remainder = addr % align;
-    if remainder == 0 {
-        addr
-    } else {
-        addr - remainder + align
-    }
-}
