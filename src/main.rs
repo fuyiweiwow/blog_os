@@ -5,7 +5,7 @@
 #![reexport_test_harness_main = "test_main"] 
 
 use core::panic::PanicInfo;
-use blog_os::{allocator, memory, println, task::{Task, simple_executor::SimpleExecutor}};
+use blog_os::{allocator, memory, println, task::{Task, executor::Executor, keyboard}};
 use bootloader::{BootInfo, entry_point};
 use x86_64::{VirtAddr};
 
@@ -30,16 +30,14 @@ fn kernel_main(boot_info: &'static BootInfo) -> ! {
     allocator::init_heap(& mut mapper, & mut frame_allocator)
         .expect("heap initialization failed");
 
-    let mut executor = SimpleExecutor::new();
-    executor.spawn(Task::new(example_task()));
-    executor.run();
-
     // Test entry point
     #[cfg(test)]
     test_main();
 
-    println!("It did not crash!");
-    blog_os::hlt_loop();
+    let mut executor = Executor::new();
+    executor.spawn(Task::new(example_task()));
+    executor.spawn(Task::new(keyboard::print_keypresses()));
+    executor.run();
 }
 
 // Will be called on panic
